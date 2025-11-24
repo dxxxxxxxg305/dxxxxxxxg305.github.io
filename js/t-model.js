@@ -47,6 +47,14 @@ document.getElementById('calculateBtn').addEventListener('click', function() {
     // 螺栓断裂强度
     const boltDuanLieForce = parseFloat(document.getElementById('boltDuanLieForce').value);
 
+    console.log(`
+        D_bolt: ${D_bolt}
+        p_bolt: ${p_bolt}
+        D_flange: ${D_flange}
+        p_flange: ${p_flange}
+    `);
+
+
     try {
         // 第一步：计算四个关键弯矩点
         // 翼缘计算出来的4个点为：（θy，May）、（θh，Mah）、（θm，Mam）、（θu，Mau）
@@ -1003,11 +1011,14 @@ function displayResults(points, failureMode) {
     // 显示关键数据点
     let pointsHTML = '';
     points.forEach((point, index) => {
-        pointsHTML += `
-            <div class="result-item">
-                <strong>${index+1}, ${point.name}  ${point.id} </strong>: 变形Δ = ${point.x.toFixed(4)} mm, 荷载F = ${point.y.toFixed(2)} kN
-            </div>
-        `;
+        // 原点虽然画出来，但是不标记，下边也不展示关键信息
+        if (index > 0) {
+            pointsHTML += `
+                <div class="result-item">
+                    <strong>${index}, ${point.name}  ${point.id} </strong>: 变形Δ = ${point.x.toFixed(4)} mm, 荷载F = ${point.y.toFixed(2)} kN
+                </div>
+            `;
+        }
     });
     document.getElementById('pointsResult').innerHTML = pointsHTML;
 }
@@ -1092,7 +1103,8 @@ function drawChartSimple(points, failureMode) {
         series: [{
             type: 'line',
             data: points.map(point => [point.x, point.y]),
-            showSymbol: 'circle',
+            // showSymbol: 'circle',
+            // showSymbol: false,
             // symbolSize: 8,
             lineStyle: {
                 color: '#3498db',
@@ -1112,7 +1124,22 @@ function drawChartSimple(points, failureMode) {
                     },
                     label: {
                         show: true,
-                        formatter: '{b}',
+                        // formatter: '{b}',
+                        // 原点虽然画出来，但是不标记，下边也不展示关键信息
+                        formatter: function(params) {
+                            console.log('formatter params:', params);
+
+                            const pointIndex = params.dataIndex;
+                            // const point = filteredPoints[pointIndex];
+
+                            // 1. 跳过特定点的数字标记（如果需要）
+                            if (pointIndex === 0) { // 原点
+                                return ''; // 返回空字符串则不显示数字
+                            } else  {
+                                return pointIndex;
+                            }
+
+                        },
                         position: 'inside',
                         color: '#000',
                         fontWeight: 'normal'

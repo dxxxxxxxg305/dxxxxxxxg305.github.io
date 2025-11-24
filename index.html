@@ -237,6 +237,12 @@
             <!-- 几何尺寸参数 -->
             <div class="parameter-group">
                 <h3>几何尺寸</h3>
+
+                <div class="form-group">
+                    <label for="boltDiameter">螺栓有效直径<!--螺栓直径--> (mm)</label>
+                    <input type="number" id="boltDiameter" step="0.1" value="6.82725">
+                </div>
+
                 <div class="input-row">
                     <div class="form-group">
                         <label for="m">m (mm)</label>
@@ -259,10 +265,7 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="boltDiameter">螺栓直径 (mm)</label>
-                    <input type="number" id="boltDiameter" step="0.1" value="6.82725">
-                </div>
+
             </div>
 
             <!-- 螺栓参数 -->
@@ -322,7 +325,7 @@
             </div>
 
             <!-- 率强化参数 -->
-            <div class="parameter-group">
+            <div class="parameter-group" style="display: none;">
                 <h3>率强化参数</h3>
                 <div class="input-row">
                     <div class="form-group">
