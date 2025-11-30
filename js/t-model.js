@@ -58,11 +58,11 @@ document.getElementById('calculateBtn').addEventListener('click', function() {
     try {
         // 第一步：计算四个关键弯矩点
         // 翼缘计算出来的4个点为：（θy，May）、（θh，Mah）、（θm，Mam）、（θu，Mau）
-        const points = calculateKeyPoints(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h, epsilon_m, epsilon_u, D_flange, p_flange, boltDiameter, boltLength);
+        const points = calculateKeyPoints(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h, epsilon_m, epsilon_u, D_flange, p_flange, boltDiameter, boltLength, D_bolt, p_bolt);
 
         // 第二步：计算三个特殊点
         // 计算出来三个点：（δy，By）、（δu，Bu）、（δf，Bf
-        const specialPoints = boltSpecialPoints(boltDiameter, boltLength, boltQuFuEpsilon, boltFengZhiEpsilon, boltDuanLieEpsilon, boltQuFuForce, boltFengZhiForce, boltDuanLieForce);
+        const specialPoints = boltSpecialPoints(boltDiameter, boltLength, boltQuFuEpsilon, boltFengZhiEpsilon, boltDuanLieEpsilon, boltQuFuForce, boltFengZhiForce, boltDuanLieForce, m, n);
 
         // 第三步：计算失效模式
         const failureMode = calculateFailureMode(m, n, tf, lf, fy, E, Eh, Enk, boltDiameter, boltLength, boltHeadDiameter, washerDiameter, D_bolt, p_bolt, D_flange, p_flange);
@@ -88,7 +88,7 @@ document.getElementById('calculateBtn').addEventListener('click', function() {
 
 // 第一步：计算四个关键弯矩点
 // 在calculateKeyPoints函数中需要接收并传递这些参数
-function calculateKeyPoints(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h, epsilon_m, epsilon_u, D_flange, p_flange, boltDiameter, boltLength) {
+function calculateKeyPoints(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h, epsilon_m, epsilon_u, D_flange, p_flange, boltDiameter, boltLength, D_bolt, p_bolt) {
     // 计算屈服应变
     const epsilon_y = fy / E;
 
@@ -150,22 +150,22 @@ function calculateKeyPoints(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h, epsilon_m, 
 
 
     // My, 屈服弯矩点， 屈服点，   / 1000 ， 用千牛作为纵坐标的单位
-    thePoint = calculateDelta(chi_y, My, m, n, tf, lf, fy, E, boltStiffness, Eh, Enk, epsilon_h, epsilon_m, epsilon_u, D_flange, p_flange, boltDiameter, boltLength);
+    thePoint = calculateDelta(chi_y, My, m, n, tf, lf, fy, E, boltStiffness, Eh, Enk, epsilon_h, epsilon_m, epsilon_u, D_flange, p_flange, boltDiameter, boltLength, D_bolt, p_bolt);
     the4KeyPoints.push({ x: thePoint.U, y: thePoint.R  / 1000, name: "翼缘屈服点", id: 'May' });
     // the4KeyPoints.push({ x: thePoint.U, y: thePoint.R  / 1000  });
 
     // Mh, 屈服弯矩点， 强化点
-    thePoint = calculateDelta(chi_h, Mh, m, n, tf, lf, fy, E, boltStiffness, Eh, Enk, epsilon_h, epsilon_m, epsilon_u, D_flange, p_flange, boltDiameter, boltLength);
+    thePoint = calculateDelta(chi_h, Mh, m, n, tf, lf, fy, E, boltStiffness, Eh, Enk, epsilon_h, epsilon_m, epsilon_u, D_flange, p_flange, boltDiameter, boltLength, D_bolt, p_bolt);
     the4KeyPoints.push({ x: thePoint.U, y: thePoint.R  / 1000, name: "翼缘强化点", id: 'Mah' });
     // the4KeyPoints.push({ x: thePoint.U, y: thePoint.R  / 1000 });
 
     // Mm, 峰值弯矩点， 峰值点
-    thePoint = calculateDelta(chi_m, Mm, m, n, tf, lf, fy, E, boltStiffness, Eh, Enk, epsilon_h, epsilon_m, epsilon_u, D_flange, p_flange, boltDiameter, boltLength);
+    thePoint = calculateDelta(chi_m, Mm, m, n, tf, lf, fy, E, boltStiffness, Eh, Enk, epsilon_h, epsilon_m, epsilon_u, D_flange, p_flange, boltDiameter, boltLength, D_bolt, p_bolt);
     the4KeyPoints.push({ x: thePoint.U, y: thePoint.R  / 1000, name: "翼缘峰值点", id: 'Mam' });
     // the4KeyPoints.push({ x: thePoint.U, y: thePoint.R  / 1000 });
 
     // Mu, 断裂弯矩点， 断裂点
-    thePoint = calculateDelta(chi_u, Mu, m, n, tf, lf, fy, E, boltStiffness, Eh, Enk, epsilon_h, epsilon_m, epsilon_u, D_flange, p_flange, boltDiameter, boltLength);
+    thePoint = calculateDelta(chi_u, Mu, m, n, tf, lf, fy, E, boltStiffness, Eh, Enk, epsilon_h, epsilon_m, epsilon_u, D_flange, p_flange, boltDiameter, boltLength, D_bolt, p_bolt);
     the4KeyPoints.push({ x: thePoint.U, y: thePoint.R  / 1000, name: "翼缘断裂点", id: 'Mau' });
     // the4KeyPoints.push({ x: thePoint.U, y: thePoint.R  / 1000  });
 
@@ -299,9 +299,9 @@ function calculateAllMoments(m, n, tf, lf, fy, E, Eh, Enk,
 
 // 位移相容系数k49 , k50
 // 从基础输入参数开始计算K49和K50
-function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_val, epsilon_u, D_flange, p_flange,  boltDiameter, boltLength) {
+function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_val, epsilon_u, D_flange, p_flange,  boltDiameter, boltLength, D_bolt, p_bolt) {
     // 从基础输入参数开始计算K49和K50
-    function calculateK49K50FromInput(m, n, tf, lf, fy, E, Eh, Enk, boltDiameter, boltLength) {
+    function calculateK49K50FromInput(m, n, tf, lf, fy, E, Eh, Enk, boltDiameter, boltLength, D_bolt, p_bolt) {
 
         const D2 = m;
 
@@ -315,6 +315,12 @@ function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_
         const D18 = p_flange; // 翼缘率强化指数 (p)
         const D17 = D_flange;  // 翼缘率强化指数 (D)
 
+        const D36 = 15.2; // 根据excel里面的数据
+        const D38 = D_bolt || 1300000; // 螺栓率强化参数 D
+        const D39 = p_bolt || 3.6; // 螺栓率强化参数 p
+
+
+        // 加载速率
         const J39 = 0;
         const J43 = 2 * 0.1 * D2
 
@@ -353,7 +359,6 @@ function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_
         const J40 = 1.0;
 
 
-
         // J46 --- ξ;
         // J47 --- β;
         // J48 --- β1;
@@ -380,6 +385,8 @@ function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_
         //  计算失效模式过渡系数
         const J51 = calculateJ51(J47, D4, J46, J42, J40);
 
+        const J52 = calculateJ52(D4, J51);
+
 
         // 第八步：最终计算K49和K50
         const K49 = calculateK49(J47, J48, J49);
@@ -392,14 +399,17 @@ function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_
         // 翼缘速率 mm/s
         const J54 = calculateJ54(J39, J47, J49, K49, D4);
 
+        //
+        const J56 = calculateJ56(J39, J47, J49, K49, D4);
+
         // 翼缘边缘应变率
         const J57 = calculateJ57(J54, D5, J43, D2);
 
         // 率强化修正系数
         const J58 = calculateJ58(D18, J57, D17);
 
-
-
+        // J59
+        const J59 = calculateJ59(J56, D36, D38, D39);
 
 
         return {
@@ -407,6 +417,7 @@ function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_
             K50: K50,
             intermediateValues: {
                 D4: D4,
+                J39,
                 J42: J42,
                 J46: J46,
                 J47: J47,
@@ -414,8 +425,11 @@ function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_
                 J49: J49,
                 J50: J50,
                 J51: J51,
+                J52,
                 J53: J53,
+                J56,
                 J58:J58,
+                J59
 
 
             }
@@ -515,6 +529,21 @@ function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_
     }
 
 
+    // J52计算函数
+    function calculateJ52(D4, J51) {
+        // Excel公式: =2*D4*(1+J51)/(D4*(1+J51)+J51)
+
+        const numerator = 2 * D4 * (1 + J51);
+        const denominator = D4 * (1 + J51) + J51;
+
+        if (denominator === 0) {
+            return 2; // 默认值
+        }
+
+        return numerator / denominator;
+    }
+
+
     // 根据Excel上下文，这个公式计算的是螺栓刚度：(螺栓材料的强度)
     // D14：屈服强度 fy (MPa)
     // D6：有效宽度 lf (mm)
@@ -560,6 +589,40 @@ function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_
         return baseTerm * conditionTerm;
     }
 
+    // J56计算函数
+    // J56=J39*IF(J47>J49,1-K49/(1+D4),D4*K49/(1+D4))
+    function calculateJ56(J39, J47, J49, K49, D4) {
+        // 参数验证
+        if (typeof J39 !== 'number' || typeof J47 !== 'number' ||
+            typeof J49 !== 'number' || typeof K49 !== 'number' ||
+            typeof D4 !== 'number') {
+            // console.error("J56计算错误: 所有参数必须为数字");
+            return 0;
+        }
+
+        // 避免除零错误
+        if (1 + D4 === 0) {
+            // console.warn("J56计算警告: 1+D4为0，返回0");
+            return 0;
+        }
+
+        let conditionTerm;
+
+        if (J47 > J49) {
+            // 情况1: J47 > J49
+            conditionTerm = 1 - K49 / (1 + D4);
+            // console.log(`J56计算: J47(${J47}) > J49(${J49}), 使用公式: 1 - ${K49}/(1+${D4}) = ${conditionTerm}`);
+        } else {
+            // 情况2: J47 <= J49
+            conditionTerm = (D4 * K49) / (1 + D4);
+            // console.log(`J56计算: J47(${J47}) <= J49(${J49}), 使用公式: ${D4}*${K49}/(1+${D4}) = ${conditionTerm}`);
+        }
+
+        const result = J39 * conditionTerm;
+        // console.log(`J56最终结果: ${J39} * ${conditionTerm} = ${result}`);
+
+        return result;
+    }
 
 
     // 根据Excel中的上下文，这个公式计算的是翼缘边缘应变率：
@@ -617,7 +680,24 @@ function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_
         return 1 + coefficient * signedPowerTerm;
     }
 
+    // J59计算函数
+    function calculateJ59(J56, D36, D38, D39) {
+        // Excel公式: =1+(J56/D36/D38)^(1/D39)
 
+        // 避免除零错误
+        if (D36 === 0 || D38 === 0 || D39 === 0) {
+            return 1;
+        }
+
+        const normalizedRate = J56 / D36 / D38;
+
+        if (normalizedRate < 0) {
+            return 1;
+        }
+
+        const rateEffect = Math.pow(normalizedRate, 1 / D39);
+        return 1 + rateEffect;
+    }
 
     function calculateD42(m, tf, boltDiameter) {
         // D42变形参数计算
@@ -663,7 +743,7 @@ function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_
         }
     }
 
-    return calculateK49K50FromInput(m, n, tf, lf, fy, E, Eh, Enk, boltDiameter, boltLength);
+    return calculateK49K50FromInput(m, n, tf, lf, fy, E, Eh, Enk, boltDiameter, boltLength, D_bolt, p_bolt);
 
 }
 
@@ -673,13 +753,13 @@ function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_
 
 // 计算变形Δ = 2*S + T
 // 完整的calculateDelta函数实现
-function calculateDelta(chi, moment, m, n, tf, lf, fy, E, boltStiffness, Eh, Enk, epsilon_h_val, epsilon_m_val,epsilon_u, D_flange, p_flange,  boltDiameter, boltLength) {
+function calculateDelta(chi, moment, m, n, tf, lf, fy, E, boltStiffness, Eh, Enk, epsilon_h_val, epsilon_m_val,epsilon_u, D_flange, p_flange,  boltDiameter, boltLength, D_bolt, p_bolt) {
 
 
     // 计算 S
     // const K49 = 0.5; // 根据Excel中的值或计算
     // const K50 = 0.8; // 根据Excel中的值或计算
-    k49k50Params = calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_val, epsilon_u, D_flange, p_flange,  boltDiameter, boltLength);
+    k49k50Params = calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_val, epsilon_u, D_flange, p_flange,  boltDiameter, boltLength, D_bolt, p_bolt);
     const {K49, K50} = k49k50Params;
 
     console.log('k49k50Params', k49k50Params)
@@ -791,67 +871,118 @@ function calculateR(moment, m, theta) {
     return 2 * moment * (1 + J51) / m / Math.cos(theta);
 }
 
+
+// Excel TREND函数的JavaScript实现
+function trend(knownYs, knownXs, newX) {
+    /**
+     * knownYs: Y值数组 [y1, y2, ...]
+     * knownXs: X值数组 [x1, x2, ...]
+     * newX: 要插值的X值
+     * 返回: 对应的Y值
+     */
+
+    // 参数验证
+    if (!Array.isArray(knownYs) || !Array.isArray(knownXs)) {
+        throw new Error("knownYs和knownXs必须是数组");
+    }
+
+    if (knownYs.length !== knownXs.length) {
+        throw new Error("knownYs和knownXs数组长度必须相同");
+    }
+
+    if (knownYs.length < 2) {
+        throw new Error("至少需要2个数据点进行插值");
+    }
+
+    // 如果newX正好等于某个已知点，直接返回对应的Y值
+    for (let i = 0; i < knownXs.length; i++) {
+        if (knownXs[i] === newX) {
+            return knownYs[i];
+        }
+    }
+
+    // 找到newX所在的区间
+    let lowerIndex = -1;
+    let upperIndex = -1;
+
+    // 对已知点按X值排序（保持X-Y对应关系）
+    const points = knownXs.map((x, index) => ({ x, y: knownYs[index] }));
+    points.sort((a, b) => a.x - b.x);
+
+    const sortedXs = points.map(p => p.x);
+    const sortedYs = points.map(p => p.y);
+
+    // 处理边界情况
+    if (newX <= sortedXs[0]) {
+        // newX小于等于最小值，使用第一个区间
+        lowerIndex = 0;
+        upperIndex = 1;
+    } else if (newX >= sortedXs[sortedXs.length - 1]) {
+        // newX大于等于最大值，使用最后一个区间
+        lowerIndex = sortedXs.length - 2;
+        upperIndex = sortedXs.length - 1;
+    } else {
+        // 在中间找到newX所在的区间
+        for (let i = 0; i < sortedXs.length - 1; i++) {
+            if (newX >= sortedXs[i] && newX <= sortedXs[i + 1]) {
+                lowerIndex = i;
+                upperIndex = i + 1;
+                break;
+            }
+        }
+    }
+
+    // 如果没找到合适的区间（理论上不会发生）
+    if (lowerIndex === -1 || upperIndex === -1) {
+        throw new Error("无法找到合适的插值区间");
+    }
+
+    // 线性插值计算
+    const x1 = sortedXs[lowerIndex];
+    const y1 = sortedYs[lowerIndex];
+    const x2 = sortedXs[upperIndex];
+    const y2 = sortedYs[upperIndex];
+
+    // 避免除零
+    if (x1 === x2) {
+        return (y1 + y2) / 2; // 如果X值相同，返回Y值的平均值
+    }
+
+    // 线性插值公式: y = y1 + (newX - x1) * (y2 - y1) / (x2 - x1)
+    const result = y1 + (newX - x1) * (y2 - y1) / (x2 - x1);
+
+    return result;
+}
+
+
+
 // 计算 T - 实现TREND函数逻辑
 // R(F): 为受力（R列的值）， 参考插值表的值，用trend（excel函数）插值算法根据Ma（弯矩的值）得到 T（Δ2）的值
 function calculateT(R) {
-    // 插值算法，示例1：简单线性回归（最小二乘法）
-    // const tableYs = [100, 120, 150, 180, 200];
-    // const tableYs = [1, 2, 3, 4, 5];
-    // const inputXs = [6, 7, 8];
-    // const predictions = trend(tableYs, tableXs, inputXs);
-    // console.log('预测:', predictions);
-    // 输出: [220, 240, 260] (近似值)
-    function trend(y, x = [], new_x = [], constant = true) {
-        // 如果x为空，使用默认序列 [1, 2, 3, ...]
-        if (x.length === 0) {
-            x = Array.from({length: y.length}, (_, i) => i + 1);
-        }
 
-        // 如果没有提供new_x，使用x作为预测点
-        if (new_x.length === 0) {
-            new_x = [...x];
-        }
-
-        const n = y.length;
-
-        // 计算统计量
-        const sumX = x.reduce((a, b) => a + b, 0);
-        const sumY = y.reduce((a, b) => a + b, 0);
-        const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
-        const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
-
-        let slope, intercept;
-
-        if (constant) {
-            // 有截距的线性回归: y = a + bx
-            slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-            intercept = (sumY - slope * sumX) / n;
-        } else {
-            // 无截距的线性回归: y = bx
-            slope = sumXY / sumX2;
-            intercept = 0;
-        }
-
-        // 计算预测值
-        return new_x.map(xi => intercept + slope * xi);
-    }
 
 
     // 参考表, 假设的参考数据点 (基于Excel中的U21:V24)， 按 x 值从小到大排列
     // const referencePoints = [
     //     { x: 0, y: 0 },   // U21, V21
     //     { x: 32686, y: 0.07 },   // U22, V22
-    //     { x: 37715, y: 3.95 },   // U24, V24
     //     { x: 46767, y: 1.30 },   // U23, V23
+    //     { x: 37715, y: 3.95 },   // U24, V24
+    // ];
+
+    // excel表U20 - V22
+    // const referencePoints = [
+    //     { x: 0, y: 0 },   // U20, V20
+    //     { x: 0, y: 0 },   // U21, V21
+    //     { x: 32686, y: 0.07 },   // U22, V22
     // ];
 
     // excel表U20 - V22
     const referencePoints = [
-        { x: 0, y: 0 },   // U20, V20
-        { x: 0, y: 0 },   // U21, V21
-        { x: 32686, y: 0.07 },   // U22, V22
-        // { x: 37715, y: 3.95 },   // U24, V24
-        // { x: 46767, y: 1.30 },   // U23, V23
+        {x: 0, y: 0},   // U21, V21
+        {x: 32686, y: 0.07},   // U22, V22
+        {x: 37715, y: 3.95},   // U24, V24
+        {x: 46767, y: 1.30},   // U23, V23
     ];
 
 
@@ -862,36 +993,96 @@ function calculateT(R) {
         tableXs.push(p.x);
         tableYs.push(p.y);
     });
-    const predictDelta2 = trend(tableYs, tableXs, inputXs);
-
-    // T 列（Δ2）的值
-    let T = 0;
-    if (predictDelta2.length > 0 ) {
-        T = predictDelta2[0];
-    }
+    // const predictDelta2 = trend(tableYs, tableXs, inputXs);
+    //
+    // // T 列（Δ2）的值
+    // let T = 0;
+    // if (predictDelta2.length > 0 ) {
+    //     T = predictDelta2[0];
+    // }
+    const T = trend(tableYs, tableXs, R);
     return T;
 }
 
+
+
+
+
+// 计算螺栓位移， 2S + T, 关键要计算出螺栓受力时同时引起翼缘形变位移 S
+// Fb 螺栓载荷，R列的值
+// T，螺栓本身的位移，T列的值
+function luoshuanWeiyi(Fb, T, m, n) {
+
+    // 通过插值方法计算出几何变化角θ （K列）
+    // x: L列（受力）， y: K列（角度）
+    const references = {
+        x: [0, 16427,   24506,   26556,   29160,   31880,   34734,   37779,   41883,   44338,   46087,   47495,   48734,   49895,   51035,   52195,   53404,   54687,   56069,   57574,   59229,   61061,   63106,   65402,   67998,   70953,   74340,   78256],
+        y: [0, 0.0000 , 0.0027 , 0.0185 , 0.0511 , 0.0946 , 0.1463 , 0.2044 , 0.2844 , 0.3352 , 0.3733 , 0.4051 , 0.4335 , 0.4603 , 0.4863 , 0.5123 , 0.5387 , 0.5656 , 0.5934 , 0.6221 , 0.6518 , 0.6827 , 0.7148 , 0.7481 , 0.7826 , 0.8183 , 0.8553 , 0.8936],
+    };
+    // 插值得到theta
+    const theta = trend(references.y, references.x, Fb);
+
+    const K49 = k49k50Params.K49;
+    const K50 = k49k50Params.K50;
+    const J53 = k49k50Params.intermediateValues.J53;
+    const D2 = m;
+    const D4 = n/m;
+    const S = K49 * Math.sin(theta) * D2 + (K50 - K49) * T / D4 / 2 + Fb / J53;
+    const U = 2 * S + T;
+
+    console.log(`
+        theta: ${theta} 
+        S: ${S} 
+        T: ${T} 
+        m: ${m} 
+        n: ${n} 
+        K50: ${K50} 
+        K49: ${K49} 
+        J53: ${J53} 
+        Fb: ${Fb} 
+    `);
+
+    return {U, S};
+}
+
+// 计算螺栓断裂位移
+// S9=S8+(R9-R8)/$J$53
+// Su（S8）:  螺栓峰值(Sf 断裂的前一个状态)时引起的翼缘位移 S
+// Ff(R9):  断裂状态的受力F
+// Fu(R8):  螺栓峰值(Sf 断裂的前一个状态)时 的受力
+// T，螺栓本身的位移，T列的值
+function luoshanDuanlieWeiYi(Su, Ff, Fu, T) {
+    const J53 = k49k50Params.intermediateValues.J53;
+    const S = Su + (Ff -Fu) / J53;
+    const U = 2 * S + T;
+    return U;
+}
 
 
 // 第二步：计算螺栓三个特殊点 δy为横轴位移， By（屈服荷载）为纵轴F（受力）值
 // D44:D46对应的数据：π*de^2/4*应力（三个数据对应螺栓材料的三个点）
 // D41:D43对应的数据：前两个点，螺栓应变*螺栓计算长度；第三个点=ef*de*5-eu*(de*5-lb)
 // 计算出来三个点：（δy，By）、（δu，Bu）、（δf，Bf）
-function boltSpecialPoints(boltDiameter, boltLength, boltQuFuEpsilon, boltFengZhiEpsilon, boltDuanLieEpsilon, boltQuFuForce, boltFengZhiForce, boltDuanLieForce) {
+function boltSpecialPoints(boltDiameter, boltLength, boltQuFuEpsilon, boltFengZhiEpsilon, boltDuanLieEpsilon, boltQuFuForce, boltFengZhiForce, boltDuanLieForce, m, n) {
+
+
+    // R = D44*$J$59*$J$52
+
+    const J59 = k49k50Params.intermediateValues.J59;
+    const J52 = k49k50Params.intermediateValues.J52;
 
     // 计算螺栓面积
     const boltArea = Math.PI * boltDiameter * boltDiameter / 4;
 
 
     // 计算螺栓屈服荷载
-    const By = boltArea * boltQuFuForce;
+    const By = boltArea * boltQuFuForce * J59 * J52;
 
     // 计算螺栓峰值荷载
-    const Bu = boltArea * boltFengZhiForce;
+    const Bu = boltArea * boltFengZhiForce * J59 * J52;
 
     // 计算螺栓断裂荷载
-    const Bf = boltArea * boltDuanLieForce; // 假设断裂荷载为峰值荷载的85%
+    const Bf = boltArea * boltDuanLieForce * J59 * J52; // 假设断裂荷载为峰值荷载的85%
 
     // 计算对应的变形和荷载
     // 根据Excel中的公式计算D41, D42, D43, D44, D45, D46
@@ -903,18 +1094,29 @@ function boltSpecialPoints(boltDiameter, boltLength, boltQuFuEpsilon, boltFengZh
     // lb : boltLength, 计算长度
 
     // 螺栓屈服
-    const delta1 = boltLength * boltQuFuEpsilon;
+    const Ty =  boltLength * boltQuFuEpsilon; // 螺栓本身位移
+    const deltaBy = luoshuanWeiyi(By, Ty, m, n);; // 螺栓本身位移 + 翼缘位移
+    const delta1 = deltaBy.U
     const F1 = By / 1000; // 千牛为单位
 
     // 螺栓峰值
-    const delta2 = boltLength * boltFengZhiEpsilon;
+    // const delta2 = boltLength * boltFengZhiEpsilon;
+    const Tu =  boltLength * boltFengZhiEpsilon; // 螺栓本身位移
+    const deltaBu = luoshuanWeiyi(Bu, Tu, m, n) ; // 螺栓本身位移 + 翼缘位移
+    const delta2 = deltaBu.U ; // 螺栓本身位移 + 翼缘位移
     const F2 = Bu / 1000; // 千牛为单位;
 
     // 螺栓断裂
     // delta3(位移)=ef*de*5-eu*(de*5-lb)
+    // const delta3 = (boltDuanLieEpsilon * boltDiameter * boltLengthDiameterRatio)
+    //                         - (boltFengZhiEpsilon * (boltDiameter * boltLengthDiameterRatio - boltLength));
+
     const boltLengthDiameterRatio = 5; // 25/5
-    const delta3 = (boltDuanLieEpsilon * boltDiameter * boltLengthDiameterRatio)
-                            - (boltFengZhiEpsilon * (boltDiameter * boltLengthDiameterRatio - boltLength));
+    // 螺栓本身位移
+    const Tf =  (boltDuanLieEpsilon * boltDiameter * boltLengthDiameterRatio)
+                        - (boltFengZhiEpsilon * (boltDiameter * boltLengthDiameterRatio - boltLength));
+    const delta3 = luoshanDuanlieWeiYi(deltaBu.S, Bf, Bu, Tf) ; // 螺栓本身位移 + 翼缘位移
+
     const F3 = Bf / 1000; // 千牛为单位;
 
     return [
@@ -959,6 +1161,9 @@ function sortThe7Points(boltPoints, flangePoints) {
 
     // 合并所有点并按纵坐标排序
     const allPoints = [point00, ...flangePoints, ...boltPoints].sort((a, b) => a.y - b.y);
+
+    // console.log(boltPoints)
+    console.log(flangePoints)
 
     // 找到关键点, Bu后一个点是Bf
     let BuPointIndex = -100;
@@ -1127,7 +1332,7 @@ function drawChartSimple(points, failureMode) {
                         // formatter: '{b}',
                         // 原点虽然画出来，但是不标记，下边也不展示关键信息
                         formatter: function(params) {
-                            console.log('formatter params:', params);
+                            // console.log('formatter params:', params);
 
                             const pointIndex = params.dataIndex;
                             // const point = filteredPoints[pointIndex];
