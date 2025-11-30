@@ -907,6 +907,8 @@ function trend(knownYs, knownXs, newX) {
 
     // 对已知点按X值排序（保持X-Y对应关系）
     const points = knownXs.map((x, index) => ({ x, y: knownYs[index] }));
+
+    // 不排序了，就按参考的数据
     points.sort((a, b) => a.x - b.x);
 
     const sortedXs = points.map(p => p.x);
@@ -943,6 +945,7 @@ function trend(knownYs, knownXs, newX) {
     const x2 = sortedXs[upperIndex];
     const y2 = sortedYs[upperIndex];
 
+
     // 避免除零
     if (x1 === x2) {
         return (y1 + y2) / 2; // 如果X值相同，返回Y值的平均值
@@ -951,6 +954,41 @@ function trend(knownYs, knownXs, newX) {
     // 线性插值公式: y = y1 + (newX - x1) * (y2 - y1) / (x2 - x1)
     const result = y1 + (newX - x1) * (y2 - y1) / (x2 - x1);
 
+    // if([37779, 78255].includes(parseInt(newX))) {
+    //     // console.log("37779 ==== ",, x2, y2, newX)
+    //     console.log(`
+    //      插值：
+    //         newX: ${newX}
+    //         (x1, y1): ${x1}, ${y1},
+    //         (x2, y2): ${x2}, ${y2},
+    //
+    //         result: ${result}
+    //     `);
+    // }
+
+    return result;
+}
+
+// 根据螺栓的几个数据点计算翼缘变化 T（Δ2） 的值
+// 比如就以F-Δ2里的第二个点  By对应的点作为分界点，只要F小于他，通通使用第一段线插值，只要F大于他，通通第二段线插值
+// by是32686， bu是46767， bf是37715，bf为断裂时的数据，已失去参考意义
+// x: U20:U24 = ["F-Δ2",   0,          32686,      46767,      37715]
+// y: V20:V24 = [0,        0.00,       0.07,       1.30,       3.95]
+// Rf: R列的受力值
+function trendByLuoshanData (Rf) {
+    const xs = [0,          32686,      46767];
+    const ys = [0,          0.07,       1.30];
+
+    function chazhi(x, x1,y1, x2, y2) {
+        let y = (x-x1) * (y2-y1) / (x2-x1) + y1
+        return y;
+    }
+    let result = 0;
+    if (Rf <= xs[1]) {
+        result = chazhi(Rf,  xs[0],ys[0],  xs[1],ys[1]  );
+    } else {
+        result = chazhi(Rf,  xs[1],ys[1],  xs[2],ys[2]  );
+    }
     return result;
 }
 
@@ -959,48 +997,7 @@ function trend(knownYs, knownXs, newX) {
 // 计算 T - 实现TREND函数逻辑
 // R(F): 为受力（R列的值）， 参考插值表的值，用trend（excel函数）插值算法根据Ma（弯矩的值）得到 T（Δ2）的值
 function calculateT(R) {
-
-
-
-    // 参考表, 假设的参考数据点 (基于Excel中的U21:V24)， 按 x 值从小到大排列
-    // const referencePoints = [
-    //     { x: 0, y: 0 },   // U21, V21
-    //     { x: 32686, y: 0.07 },   // U22, V22
-    //     { x: 46767, y: 1.30 },   // U23, V23
-    //     { x: 37715, y: 3.95 },   // U24, V24
-    // ];
-
-    // excel表U20 - V22
-    // const referencePoints = [
-    //     { x: 0, y: 0 },   // U20, V20
-    //     { x: 0, y: 0 },   // U21, V21
-    //     { x: 32686, y: 0.07 },   // U22, V22
-    // ];
-
-    // excel表U20 - V22
-    const referencePoints = [
-        {x: 0, y: 0},   // U21, V21
-        {x: 32686, y: 0.07},   // U22, V22
-        {x: 37715, y: 3.95},   // U24, V24
-        {x: 46767, y: 1.30},   // U23, V23
-    ];
-
-
-    const tableXs = [];
-    const tableYs = [];
-    const inputXs = [R];
-    referencePoints.map(p => {
-        tableXs.push(p.x);
-        tableYs.push(p.y);
-    });
-    // const predictDelta2 = trend(tableYs, tableXs, inputXs);
-    //
-    // // T 列（Δ2）的值
-    // let T = 0;
-    // if (predictDelta2.length > 0 ) {
-    //     T = predictDelta2[0];
-    // }
-    const T = trend(tableYs, tableXs, R);
+    const T = trendByLuoshanData( R);
     return T;
 }
 
@@ -1163,7 +1160,7 @@ function sortThe7Points(boltPoints, flangePoints) {
     const allPoints = [point00, ...flangePoints, ...boltPoints].sort((a, b) => a.y - b.y);
 
     // console.log(boltPoints)
-    console.log(flangePoints)
+    console.log(allPoints)
 
     // 找到关键点, Bu后一个点是Bf
     let BuPointIndex = -100;
