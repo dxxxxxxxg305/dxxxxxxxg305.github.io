@@ -13,7 +13,7 @@ let k49k50Params = {};
 
 document.getElementById('calculateBtn').addEventListener('click', function() {
     // 获取输入参数
-    const m = parseFloat(document.getElementById('m').value);
+    // const m = parseFloat(document.getElementById('m').value);
     const n = parseFloat(document.getElementById('n').value);
     const tf = parseFloat(document.getElementById('tf').value);
     const lf = parseFloat(document.getElementById('lf').value);
@@ -54,6 +54,10 @@ document.getElementById('calculateBtn').addEventListener('click', function() {
         p_flange: ${p_flange}
     `);
 
+    // m 依赖于 翼缘厚度 和 n 值
+    const m = calculateM(tf, n);
+
+
 
     try {
         // 第一步：计算四个关键弯矩点
@@ -82,6 +86,13 @@ document.getElementById('calculateBtn').addEventListener('click', function() {
         alert("计算过程中出现错误，请检查输入参数");
     }
 });
+
+// m值 =(180-D5)/2-D3-0.8*D5
+// 依赖于 翼缘厚度 和 n 值
+function calculateM(tf, n) {
+    return (180-tf) / 2 - n - (0.8 * tf);
+}
+
 
 
 
@@ -1150,7 +1161,7 @@ function boltSpecialPoints(boltDiameter, boltLength, boltQuFuEpsilon, boltFengZh
  *
  *
  */
-function sortThe7Points(boltPoints, flangePoints) {
+function sortThe7Points_BAK(boltPoints, flangePoints) {
     // 除去螺栓点 Bf （螺栓断裂），取三个的点中的前面两个
     const twoBoltPoints = [boltPoints[0], boltPoints[1]];
 
@@ -1193,6 +1204,72 @@ function sortThe7Points(boltPoints, flangePoints) {
 
     // 去掉 螺栓的最后一个点bf (Δ，Fbf)
     drawPoints = drawPoints.filter(i => i.id !== 'Bf');
+    return drawPoints;
+
+}
+
+
+/**
+ *
+ *  对7个点[除了螺栓的最后一个点(Δ，Fbf)]的纵坐标从小到大排序，
+ *  如果从小到大，若该点纵坐标达到Fu，后续数据就不再取了；
+ *  若该点数据达到Fbu，则下一点为Fbf，若该点为Fbf，后续数据就不再取了
+ *
+ *  Fu(翼缘弯矩断裂) 理论上应该少于Fbu(螺栓峰值载荷)，按从小到大的排序，到了Fbu点之后的下一个肯定是Fbf点（螺栓断裂点载荷）, 都断裂了，展示该点没意义
+ *
+ *  ... Fu ... Fbu Fbf ...  (Fu < Fbu)
+ *  ... Fbu Fbf ... Fu ...  (Fu > Fbu)
+ *
+ * 这里边是7个点，但是最后排列的时候有一定的规则[捂脸]两种情况：
+ * 1、从小到大排列（不包括Bf），超过Mu对应的荷载的点，都不再参与绘制曲线；
+ * 2、从小到大排列（不包括Bf），超过Bu的点都不再参与绘制曲线，Bu后一个点必须是Bf
+ *
+ *  @var boltPoints , 螺栓计算出来的3个关键点，按顺序是 （δy，By）、（δu，Bu）、（δf，Bf）
+ *  @var flangePoints , 翼缘计算出来的4个关键点，按顺序是 （θy，May）、（θh，Mah）、（θm，Mam）、（θu，Mau）
+ *
+ *
+ *  { x: delta1, y: F1, name: "螺栓屈服点", id: 'By' },
+ *  { x: delta2, y: F2, name: "螺栓峰值点", id: 'Bu'  },
+ *  { x: delta3, y: F3, name: "螺栓断裂点", id: 'Bf'  }
+ *
+ *  { x: thePoint.U, y: thePoint.R  / 1000, name: "翼缘屈服点", id: 'May' }
+ *  { x: thePoint.U, y: thePoint.R  / 1000, name: "翼缘强化点", id: 'Mah' }
+ *  { x: thePoint.U, y: thePoint.R  / 1000, name: "翼缘峰值点", id: 'Mam' }
+ *  { x: thePoint.U, y: thePoint.R  / 1000, name: "翼缘断裂点", id: 'Mau' }
+ *
+ *
+ */
+function sortThe7Points(boltPoints, flangePoints) {
+
+
+    const point00 = {x: 0, y: 0, name: '原点', id: 'origin'};
+
+    // 合并所有点并按纵坐标排序, 去掉Bf点
+    const allPoints = [point00, ...flangePoints, ...boltPoints].sort((a, b) => a.y - b.y).filter(i => i.id !== 'Bf');
+
+    // Fu(翼缘弯矩断裂点)
+    const pointFu = allPoints.find(i => i.id === 'Mau') || {};
+
+    // Fbu(螺栓峰值载荷点,其下一点必定是螺栓断裂点Bf)
+    const pointFbu = allPoints.find(i => i.id === 'Bu') || {};
+
+
+    let drawPoints = [];
+    // Fu < Fbu 的情况，点只截取到Fu为止
+    if (pointFu.y <= pointFbu.y) {
+
+        // 截取到第一个弯矩断裂点为止
+        const pointFuIndex = allPoints.findIndex(i => i.id === 'Mau');
+        drawPoints = allPoints.slice(0, pointFuIndex + 1);
+
+    } else {
+        // Fu > Fbu 的情况，点只截取到Fbu为止
+
+        // 截取到第一个螺栓峰值点为止（其下一个点就是断裂点）
+        const pointFbuIndex = allPoints.findIndex(i => i.id === 'Bu');
+        drawPoints = allPoints.slice(0, pointFbuIndex + 1)
+    }
+
     return drawPoints;
 
 }
@@ -1316,7 +1393,10 @@ function drawChartSimple(points, failureMode) {
             markPoint: {
                 data: points.map((point, index) => ({
                     name: `${index + 1}`,
-                    coord: [point.x + 1, point.y],
+                    //coord: [point.x , point.y],
+                    coord: [point.x, point.y + 1.5],
+                    // coord: [point.x * (1 + 0.2), point.y],
+                    // symbolOffset: [0, 1],
                     symbol: 'circle',
                     symbolSize: 5,
                     itemStyle: {
