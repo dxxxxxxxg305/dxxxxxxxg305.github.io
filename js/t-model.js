@@ -1,3 +1,6 @@
+// 全部输入参数
+let inputParams = {};
+
 // 全部关键点弯矩 ： 屈服弯矩, 强化弯矩，峰值弯矩，断裂弯矩， 塑性弯矩
 let allMoments = {
     My: 0, // 屈服弯矩
@@ -10,6 +13,9 @@ let allMoments = {
 
 // 位移相容系数k49 , k50
 let k49k50Params = {};
+
+// 螺栓 F - Δ2 （螺栓受力位移）, 此数据用作插值参考
+// let luoshanForceToDelta2 = {};
 
 document.getElementById('calculateBtn').addEventListener('click', function() {
     // 获取输入参数
@@ -48,6 +54,24 @@ document.getElementById('calculateBtn').addEventListener('click', function() {
     // 螺栓断裂强度
     const boltDuanLieForce = parseFloat(document.getElementById('boltDuanLieForce').value);
 
+
+    // m 依赖于 翼缘厚度 和 n 值
+    const m = calculateM(bf, tf, n);
+
+
+    // 集中全部输入参数
+    inputParams = {
+        bf, n, tf, m, lf,
+        fy, E, Eh, Enk,
+        boltDiameter, boltLength,
+        boltHeadDiameter, washerDiameter,
+        epsilon_h, epsilon_m, epsilon_u,
+        D_bolt, p_bolt, D_flange, p_flange,
+        boltQuFuEpsilon, boltFengZhiEpsilon, boltDuanLieEpsilon,
+        boltQuFuForce, boltFengZhiForce, boltDuanLieForce
+    };
+
+
     console.log(`
         D_bolt: ${D_bolt}
         p_bolt: ${p_bolt}
@@ -55,15 +79,15 @@ document.getElementById('calculateBtn').addEventListener('click', function() {
         p_flange: ${p_flange}
     `);
 
-    // m 依赖于 翼缘厚度 和 n 值
-    const m = calculateM(bf, tf, n);
-
 
 
     try {
         // 第一步：计算四个关键弯矩点
         // 翼缘计算出来的4个点为：（θy，May）、（θh，Mah）、（θm，Mam）、（θu，Mau）
         const points = calculateKeyPoints(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h, epsilon_m, epsilon_u, D_flange, p_flange, boltDiameter, boltLength, D_bolt, p_bolt);
+
+
+        // calculateBoltForceAndMove(boltDiameter, boltLength, boltQuFuEpsilon, boltFengZhiEpsilon, boltDuanLieEpsilon, boltQuFuForce, boltFengZhiForce, boltDuanLieForce, m, n);
 
         // 第二步：计算三个特殊点
         // 计算出来三个点：（δy，By）、（δu，Bu）、（δf，Bf
@@ -427,6 +451,8 @@ function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_
         // J59
         const J59 = calculateJ59(J56, D36, D38, D39);
 
+        // 螺栓 F - Δ2 （螺栓受力位移）, 此数据用作插值参考
+        const luoshanForceToDelta2 = calculateBoltForceAndMove(J52, J59 )
 
         return {
             K49: K49,
@@ -445,7 +471,8 @@ function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_
                 J53: J53,
                 J56,
                 J58:J58,
-                J59
+                J59,
+                luoshanForceToDelta2
 
 
             }
@@ -759,6 +786,51 @@ function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_
         }
     }
 
+
+    // 计算螺栓载荷及其位移数据
+    function calculateBoltForceAndMove(J52, J59 ) {
+
+        // R = D44*$J$59*$J$52
+
+        // const J59 = k49k50Params.intermediateValues.J59;
+        // const J52 = k49k50Params.intermediateValues.J52;
+
+        const {
+            boltDiameter, boltLength,
+            boltQuFuEpsilon, boltFengZhiEpsilon, boltDuanLieEpsilon,
+            boltQuFuForce, boltFengZhiForce, boltDuanLieForce
+        } = inputParams;
+
+
+        // 计算螺栓面积
+        const boltArea = Math.PI * boltDiameter * boltDiameter / 4;
+
+
+        // 计算螺栓屈服荷载
+        const By = boltArea * boltQuFuForce * J59 * J52;
+
+        // 计算螺栓峰值荷载
+        const Bu = boltArea * boltFengZhiForce * J59 * J52;
+
+        // 计算螺栓断裂荷载
+        const Bf = boltArea * boltDuanLieForce * J59 * J52; // 假设断裂荷载为峰值荷载的85%
+
+
+
+        const Ty =  boltLength * boltQuFuEpsilon; // 螺栓本身位移
+        const Tu =  boltLength * boltFengZhiEpsilon; // 螺栓本身位移
+        const boltLengthDiameterRatio = 5; // 25/5
+        // 螺栓本身位移
+        const Tf =  (boltDuanLieEpsilon * boltDiameter * boltLengthDiameterRatio)
+            - (boltFengZhiEpsilon * (boltDiameter * boltLengthDiameterRatio - boltLength));
+
+        return {
+            force: {By, Bu, Bf},
+            move: {Ty, Tu, Tf},
+        };
+    }
+
+
     return calculateK49K50FromInput(m, n, tf, lf, fy, E, Eh, Enk, boltDiameter, boltLength, D_bolt, p_bolt);
 
 }
@@ -791,8 +863,6 @@ function calculateDelta(chi, moment, m, n, tf, lf, fy, E, boltStiffness, Eh, Enk
 
     // x轴： 2Δ1+Δ2
     // S: Δ1    ;     T:  Δ2
-
-
     // 计算 T - 使用TREND函数逻辑
     // R(列) 为受力 F
     const T = calculateT(R);
@@ -836,6 +906,12 @@ function calculateDelta(chi, moment, m, n, tf, lf, fy, E, boltStiffness, Eh, Enk
     return {U, R};
     // return U;
 }
+
+// 计算中间值
+function calculateIntermediateValues() {
+
+}
+
 
 // 完整的calculateTheta函数
 function calculateTheta(chi, moment, m, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_val) {
@@ -992,8 +1068,20 @@ function trend(knownYs, knownXs, newX) {
 // y: V20:V24 = [0,        0.00,       0.07,       1.30,       3.95]
 // Rf: R列的受力值
 function trendByLuoshanData (Rf) {
-    const xs = [0,          32686,      46767];
-    const ys = [0,          0.07,       1.30];
+    // const xs = [0,          32686,      46767];
+    // const ys = [0,          0.07,       1.30];
+    const luoshanForceToDelta2 = k49k50Params.intermediateValues.luoshanForceToDelta2;
+
+    // 前面的 + 号把 toFixed 后的字符串转换回来成数字
+    const By = +luoshanForceToDelta2.force.By.toFixed(0);
+    const Bu = +luoshanForceToDelta2.force.Bu.toFixed(0);
+    const Ty = +luoshanForceToDelta2.move.Ty.toFixed(2);
+    const Tu = +luoshanForceToDelta2.move.Tu.toFixed(2);
+
+    const xs = [0,      By,      Bu];
+    const ys = [0,      Ty,      Tu];
+
+    console.log(xs, ys)
 
     function chazhi(x, x1,y1, x2, y2) {
         let y = (x-x1) * (y2-y1) / (x2-x1) + y1
@@ -1070,6 +1158,7 @@ function luoshanDuanlieWeiYi(Su, Ff, Fu, T) {
     const U = 2 * S + T;
     return U;
 }
+
 
 
 // 第二步：计算螺栓三个特殊点 δy为横轴位移， By（屈服荷载）为纵轴F（受力）值
@@ -1293,7 +1382,7 @@ function calculateFailureMode() {
     const J47 = k49k50Params.intermediateValues.J47.toFixed(3);
     const J51 = k49k50Params.intermediateValues.J51.toFixed(3);
     const params = `<span class="f-model-b">β = ${J47}</span>,  <span class="f-model-b">ψ = ${J51}</span> `;
-    return `${failureMode}, ${params}`;
+    return `<span class="f-model">${failureMode}</span>, ${params}`;
 }
 
 // 显示计算结果
