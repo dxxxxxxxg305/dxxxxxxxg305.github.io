@@ -14,6 +14,7 @@ let k49k50Params = {};
 document.getElementById('calculateBtn').addEventListener('click', function() {
     // 获取输入参数
     // const m = parseFloat(document.getElementById('m').value);
+    const bf = parseFloat(document.getElementById('bf').value);
     const n = parseFloat(document.getElementById('n').value);
     const tf = parseFloat(document.getElementById('tf').value);
     const lf = parseFloat(document.getElementById('lf').value);
@@ -55,7 +56,7 @@ document.getElementById('calculateBtn').addEventListener('click', function() {
     `);
 
     // m 依赖于 翼缘厚度 和 n 值
-    const m = calculateM(tf, n);
+    const m = calculateM(bf, tf, n);
 
 
 
@@ -87,10 +88,13 @@ document.getElementById('calculateBtn').addEventListener('click', function() {
     }
 });
 
+// bf 翼缘总长度， 默认180mm
+// tf 翼缘厚度
 // m值 =(180-D5)/2-D3-0.8*D5
 // 依赖于 翼缘厚度 和 n 值
-function calculateM(tf, n) {
-    return (180-tf) / 2 - n - (0.8 * tf);
+function calculateM(bf, tf, n) {
+    // (0.8 * tf)： 认为翼缘厚度 约等于 腹板厚度
+    return (bf - tf) / 2 - n - (0.8 * tf);
 }
 
 
@@ -1254,6 +1258,9 @@ function sortThe7Points(boltPoints, flangePoints) {
     // Fbu(螺栓峰值载荷点,其下一点必定是螺栓断裂点Bf)
     const pointFbu = allPoints.find(i => i.id === 'Bu') || {};
 
+    // Fbf(螺栓断裂点Bf)
+    const pointFbf = boltPoints.find(i => i.id === 'Bf') || {};
+
 
     let drawPoints = [];
     // Fu < Fbu 的情况，点只截取到Fu为止
@@ -1268,7 +1275,10 @@ function sortThe7Points(boltPoints, flangePoints) {
 
         // 截取到第一个螺栓峰值点为止（其下一个点就是断裂点）
         const pointFbuIndex = allPoints.findIndex(i => i.id === 'Bu');
-        drawPoints = allPoints.slice(0, pointFbuIndex + 1)
+        drawPoints = allPoints.slice(0, pointFbuIndex + 1);
+
+        //因为最后的一个点是Bu, 顺带吧Bf点也带上
+        drawPoints.push(pointFbf);
     }
 
     return drawPoints;
@@ -1282,7 +1292,7 @@ function calculateFailureMode() {
     const failureMode = k49k50Params.intermediateValues.J50 || 'FM1-FF';
     const J47 = k49k50Params.intermediateValues.J47.toFixed(3);
     const J51 = k49k50Params.intermediateValues.J51.toFixed(3);
-    const params = `J47(β): ${J47},  J51 (ψ): ${J51}`;
+    const params = `<span class="f-model-b">β = ${J47}</span>,  <span class="f-model-b">ψ = ${J51}</span> `;
     return `${failureMode}, ${params}`;
 }
 
