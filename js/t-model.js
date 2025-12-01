@@ -1470,6 +1470,9 @@ function drawChartSimple(points, failureMode) {
         tooltip: {
             trigger: 'item',
             formatter: function(params) {
+                if (params.dataIndex === 0) {
+                    return  false; // 原点不展示tooltip
+                }
                 const point = points[params.dataIndex];
                 return `${point.name} ${point.id}<br/>变形Δ: ${point.x.toFixed(4)} mm<br/>荷载F: ${point.y.toFixed(2)} kN`;
             }
@@ -1494,42 +1497,58 @@ function drawChartSimple(points, failureMode) {
             },
 
             markPoint: {
-                data: points.map((point, index) => ({
-                    name: `${index + 1}`,
-                    //coord: [point.x , point.y],
-                    coord: [point.x, point.y + 1.5],
-                    // coord: [point.x * (1 + 0.2), point.y],
-                    // symbolOffset: [0, 1],
-                    symbol: 'circle',
-                    symbolSize: 5,
-                    itemStyle: {
-                        color: '#fff',
-                        borderColor: '#e74c3c',
-                        borderWidth: 0
-                    },
-                    label: {
-                        show: true,
-                        // formatter: '{b}',
-                        // 原点虽然画出来，但是不标记，下边也不展示关键信息
-                        formatter: function(params) {
-                            // console.log('formatter params:', params);
 
-                            const pointIndex = params.dataIndex;
-                            // const point = filteredPoints[pointIndex];
+                  data: points.map((point, index) => {
+                      let mPoint = {
+                          name: `${index + 1}`,
+                          //coord: [point.x , point.y],
+                          coord: [point.x, point.y + 1.5],
+                          symbol: 'circle',
+                          symbolSize: 5,
+                          itemStyle: {
+                              color: '#fff',
+                              borderColor: '#e74c3c',
+                              borderWidth: 0
+                          },
+                          label: {
+                              show: true,
+                              // formatter: '{b}',
+                              // 原点虽然画出来，但是不标记，下边也不展示关键信息
+                              formatter: function(params) {
+                                  // console.log('formatter params:', params);
 
-                            // 1. 跳过特定点的数字标记（如果需要）
-                            if (pointIndex === 0) { // 原点
-                                return ''; // 返回空字符串则不显示数字
-                            } else  {
-                                return pointIndex;
-                            }
+                                  const pointIndex = params.dataIndex;
+                                  // const point = filteredPoints[pointIndex];
 
-                        },
-                        position: 'inside',
-                        color: '#000',
-                        fontWeight: 'normal'
-                    }
-                }))
+                                  // 1. 跳过特定点的数字标记（如果需要）
+                                  if (pointIndex === 0) { // 原点
+                                      return ''; // 返回空字符串则不显示数字
+                                  } else  {
+                                      return pointIndex;
+                                  }
+
+                              },
+                              position: 'inside',
+                              color: '#000',
+                              fontWeight: 'normal'
+                          }
+                      }
+                      if(index === 0) {
+                          // 原点不展示
+                          Object.assign(mPoint, {
+                              symbol: false,
+                              symbolSize: 0,
+                              label: {
+                                  show: false
+                              }
+                          });
+                      }
+
+                      return mPoint;
+                  })
+
+
+
             }
 
         }],
