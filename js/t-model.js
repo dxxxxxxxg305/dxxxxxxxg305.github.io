@@ -1395,9 +1395,13 @@ function displayResults(points, failureMode) {
     points.forEach((point, index) => {
         // 原点虽然画出来，但是不标记，下边也不展示关键信息
         if (index > 0) {
+
+
             pointsHTML += `
                 <div class="result-item">
-                    <strong>${index}, ${point.name}  ${point.id} </strong>: 变形Δ = ${point.x.toFixed(4)} mm, 荷载F = ${point.y.toFixed(2)} kN
+                     <div class="r-i1"><strong>${index}, ${point.name}  ${point.id} </strong>:</div>
+                     <div class="r-i1">荷载F = ${point.y.toFixed(2)} kN</div>
+                     <div class="r-i1">变形Δ = ${point.x.toFixed(4)} mm</div>
                 </div>
             `;
         }
@@ -1471,10 +1475,14 @@ function drawChartSimple(points, failureMode) {
             trigger: 'item',
             formatter: function(params) {
                 if (params.dataIndex === 0) {
-                    return  false; // 原点不展示tooltip
+                    return  ''; // 原点不展示tooltip
                 }
                 const point = points[params.dataIndex];
-                return `${point.name} ${point.id}<br/>变形Δ: ${point.x.toFixed(4)} mm<br/>荷载F: ${point.y.toFixed(2)} kN`;
+                return `
+                    ${point.name} ${point.id}<br/>
+                    荷载F: ${point.y.toFixed(2)} kN <br> 
+                    变形Δ: ${point.x.toFixed(4)} mm
+                `;
             }
         },
         xAxis: {
@@ -1536,7 +1544,7 @@ function drawChartSimple(points, failureMode) {
                       if(index === 0) {
                           // 原点不展示
                           Object.assign(mPoint, {
-                              symbol: false,
+                              symbol: '',
                               symbolSize: 0,
                               label: {
                                   show: false
