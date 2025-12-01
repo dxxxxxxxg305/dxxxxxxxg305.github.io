@@ -327,6 +327,7 @@ function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_
         const D17 = D_flange;  // 翼缘率强化指数 (D)
 
         const D36 = 15.2; // 根据excel里面的数据
+        // const D36 = 22.4; // 根据excel里面的数据
         const D38 = D_bolt || 1300000; // 螺栓率强化参数 D
         const D39 = p_bolt || 3.6; // 螺栓率强化参数 p
 
@@ -1279,7 +1280,10 @@ function sortThe7Points(boltPoints, flangePoints) {
 // 第三步：计算失效模式
 function calculateFailureMode() {
     const failureMode = k49k50Params.intermediateValues.J50 || 'FM1-FF';
-    return failureMode;
+    const J47 = k49k50Params.intermediateValues.J47.toFixed(3);
+    const J51 = k49k50Params.intermediateValues.J51.toFixed(3);
+    const params = `J47(β): ${J47},  J51 (ψ): ${J51}`;
+    return `${failureMode}, ${params}`;
 }
 
 // 显示计算结果
