@@ -541,10 +541,10 @@ function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_
 
     // 物理意义说明
     // J51是一个失效模式过渡系数，其计算逻辑：
-    // J47 < 阈值：返回1，表示完全弹性状态
-    // J47 > 2×J40：返回0，表示完全塑性状态
+    // J47 < 阈值：返回1，表示FM1-FF
+    // J47 > 2×J40：返回0，表示FM3
     // 中间范围：使用复杂分式计算过渡系数，反映几何参数和材料参数的综合影响
-    // 这个系数在变形计算中起到重要的修正作用，确保不同受力状态下的计算准确性。
+    // 这个系数在荷载计算中起到重要的修正作用，确保不同受力状态下的计算准确性。
     function calculateJ51(J47, D4, J46, J42, J40) {
         // Excel公式:
         // =IF(J47<2*D4*J46/(1+2*D4)/J42,1,IF(J47>2*J40,0,D4*(2*J40-J47)/(((1+2*D4)/J46*J40*J42-D4)*J47)))
@@ -587,11 +587,11 @@ function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_
     }
 
 
-    // 根据Excel上下文，这个公式计算的是螺栓刚度：(螺栓材料的强度)
+    // 根据Excel上下文，这个公式计算的是T形件刚度：(翼缘材料的强度)
     // D14：屈服强度 fy (MPa)
     // D6：有效宽度 lf (mm)
     // D5：翼缘厚度 tf (mm)
-    // D2：螺栓到翼缘边缘距离 m (mm)
+    // D2：螺栓到腹板的距离 m (mm)
     function calculateJ53(D14, D6, D5, D2) {
         // Excel公式: =0.85*D14*D6*D5^3/D2^3
 
@@ -775,7 +775,7 @@ function calculateK49K50(m, n, tf, lf, fy, E, Eh, Enk, epsilon_h_val, epsilon_m_
     function calculateK50(J47, J40) {
         // Excel公式: =IF(J47>2*J40,0,IF(J47>1.63,(2-J47)/(2-1.63),1))
         // J47 = β值 = 2Mp/(m*Bu)
-        // J40 = 阈值参数
+        // J40 = DB = 阈值参数
 
         if (J47 > 2 * J40) {
             return 0;
