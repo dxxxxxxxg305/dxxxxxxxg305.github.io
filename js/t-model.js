@@ -1170,7 +1170,7 @@ function TShapeCalculator() {
                 },
                 yAxis: {
                     type: 'value',
-                    name: '荷载 F (N)',
+                    name: '荷载 F (kN)',
                     nameLocation: 'middle',
                     nameGap: 40
                 },
@@ -1327,7 +1327,7 @@ function TShapeCalculator() {
                 }],
                 grid: {
                     left: '10%',
-                    right: '5%',
+                    right: '10%',
                     bottom: '15%',
                     top: '15%'
                 }
