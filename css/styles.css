@@ -47,9 +47,7 @@ h1 {
 }
 
 .input-section h3{
-    margin: 3rem 0 1rem 0;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid lightgrey;
+
 }
 .input-section {
     flex: 1;
@@ -57,6 +55,25 @@ h1 {
     padding: 20px;
     border-right: 1px solid #eee;
 }
+
+.input-group-head {
+    display: flex;
+    border-bottom: 2px solid lightgrey;
+    margin: 3rem 0 1rem 0;
+    padding: 0.5rem 0;
+}
+.input-group-head img{
+    width: 100%;
+}
+.input-group-head .h-left{
+    width: 50%;
+    flex-shrink: 0;
+    /* margin-top: 8rem; */
+    align-self:  center;
+}
+.input-group-head .h-item{ }
+
+
 
 .output-section {
     flex: 2;

@@ -175,6 +175,9 @@ function TShapeCalculator() {
         const K50 = intermediateData.CaValues.K50;
         const J53 = intermediateData.CaValues.J53;
 
+
+        console.log(intermediateData);
+
         // 翼缘计算service
         function createFlangeService() {
             const service = {
