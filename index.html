@@ -1,17 +1,25 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>T形件全过程曲线计算器</title>
+    <title>T-stub Full-Range Behaviour Calculator</title>
     <script src="js/echarts.min.js">    </script>
 
     <link href="css/styles.css" rel="stylesheet" type="text/css"  >
 </head>
 <body>
 <div class="container">
+    <div class="language-bar">
+        <div class="language-toggle" role="group" aria-label="Language selector">
+            <span class="language-label" data-i18n="languageLabel">Language:</span>
+            <button class="language-option" type="button" data-lang-control="zh">简体中文</button>
+            <span class="language-divider">|</span>
+            <button class="language-option is-active" type="button" data-lang-control="en">English</button>
+        </div>
+    </div>
     <header>
-        <h1>T形件全过程曲线计算器</h1>
+        <h1 data-i18n="appTitle">T-stub 全过程行为计算器</h1>
     </header>
 
     <div class="content">
@@ -19,50 +27,50 @@
 
 
         <div class="input-section">
-            <h2>输入参数</h2>
+            <h2 data-i18n="inputParameters">输入参数</h2>
 
             <!-- 翼缘材料参数 -->
             <div class="parameter-group">
                 <div class="input-group-head">
-                    <div class="h-item h-left"><h3>翼缘材料</h3></div>
+                    <div class="h-item h-left"><h3 data-i18n="flangeMaterial">翼缘材料</h3></div>
                     <div class="h-item h-right"><img src="images/flange.svg" /></div>
                 </div>
 
                 <div class="input-row">
                     <div class="form-group">
-                        <label for="E">弹性模量 E (MPa)</label>
+                        <label for="E" data-i18n="elasticModulus">弹性模量 E (MPa)</label>
                         <input type="number" id="E" step="1000" value="210000">
                     </div>
                     <div class="form-group">
-                        <label for="fy">屈服强度 fy (MPa)</label>
+                        <label for="fy" data-i18n="yieldStrengthFy">屈服强度 fy (MPa)</label>
                         <input type="number" id="fy" step="1" value="410">
                     </div>
                 </div>
 
                 <div class="input-row">
                     <div class="form-group">
-                        <label for="Eh">强化模量 Eh (MPa)</label>
+                        <label for="Eh" data-i18n="strengtheningModulus">强化模量 Eh (MPa)</label>
                         <input type="number" id="Eh" step="100" value="2700">
                     </div>
                     <div class="form-group">
-                        <label for="Enk">颈缩强化 Enk (MPa)</label>
+                        <label for="Enk" data-i18n="neckingModulus">颈缩模量 Enk (MPa)</label>
                         <input type="number" id="Enk" step="10" value="150">
                     </div>
                 </div>
 
                 <div class="input-row">
                     <div class="form-group">
-                        <label for="epsilon_h">强化应变 εh</label>
+                        <label for="epsilon_h" data-i18n="strengtheningStrain">强化应变 εh</label>
                         <input type="number" id="epsilon_h" step="0.0001" value="0.015263">
                     </div>
                     <div class="form-group">
-                        <label for="epsilon_m">峰值应变 εm</label>
+                        <label for="epsilon_m" data-i18n="peakStrain">峰值应变 εm</label>
                         <input type="number" id="epsilon_m" step="0.001" value="0.137">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="epsilon_u">断裂应变 εu</label>
+                    <label for="epsilon_u" data-i18n="fractureStrainEu">断裂应变 εu</label>
                     <input type="number" id="epsilon_u" step="0.01" value="1">
                 </div>
             </div>
@@ -71,12 +79,12 @@
             <div class="parameter-group">
 
                 <div class="input-group-head">
-                    <div class="h-item h-left"><h3>几何尺寸</h3></div>
+                    <div class="h-item h-left"><h3 data-i18n="geometricDimensions">几何尺寸</h3></div>
                     <div class="h-item h-right"><img src="images/t-stub.svg" /></div>
                 </div>
 
                 <div class="form-group">
-                    <label for="boltDiameter">螺栓有效直径<!--螺栓直径--> (mm)</label>
+                    <label for="boltDiameter" data-i18n="effectiveDiameter">有效直径 (mm)</label>
                     <input type="number" id="boltDiameter" step="0.1" value="6.82725">
                 </div>
 
@@ -84,7 +92,7 @@
                     <div class="form-group">
                         <!--<label for="m">m (mm)</label>
                         <input type="number" id="m" step="0.1" value="42.2">-->
-                        <label for="m">bf (mm)</label>
+                        <label for="bf">bf (mm)</label>
                         <input type="number" id="bf" step="1" value="180">
                     </div>
                     <div class="form-group">
@@ -95,11 +103,11 @@
 
                 <div class="input-row">
                     <div class="form-group">
-                        <label for="tf">翼缘厚度 tf (mm)</label>
+                        <label for="tf" data-i18n="flangeThickness">翼缘厚度 tf (mm)</label>
                         <input type="number" id="tf" step="0.1" value="6">
                     </div>
                     <div class="form-group">
-                        <label for="lf">有效宽度 lf (mm)</label>
+                        <label for="lf" data-i18n="widthLf">宽度 lf (mm)</label>
                         <input type="number" id="lf" step="0.1" value="80">
                     </div>
                 </div>
@@ -107,18 +115,18 @@
 
                 <div class="input-row">
                     <div class="form-group">
-                        <label for="boltLength">螺栓计算长度 LB (mm)</label>
+                        <label for="boltLength" data-i18n="calculatedLength">计算长度 LB (mm)</label>
                         <input type="number" id="boltLength" step="0.1" value="20.5">
                     </div>
                     <div class="form-group">
-                        <label for="boltHeadDiameter">螺栓头直径 (mm)</label>
+                        <label for="boltHeadDiameter" data-i18n="boltHeadDiameter">螺栓头直径 (mm)</label>
                         <input type="number" id="boltHeadDiameter" step="0.1" value="13">
                     </div>
                 </div>
 
                 <div class="input-row">
                     <div class="form-group">
-                        <label for="washerDiameter">垫片直径 (mm)</label>
+                        <label for="washerDiameter" data-i18n="washerDiameter">垫圈直径 (mm)</label>
                         <input type="number" id="washerDiameter" step="0.1" value="15">
                     </div>
                 </div>
@@ -130,42 +138,38 @@
             <div class="parameter-group">
 
                 <div class="input-group-head">
-                    <div class="h-item h-left"><h3>螺栓材料</h3></div>
+                    <div class="h-item h-left"><h3 data-i18n="boltMaterial">螺栓材料</h3></div>
                     <div class="h-item h-right"><img src="images/bolt.svg" /></div>
                 </div>
 
                 <div class="input-row">
                     <div class="form-group">
-                        <label for="boltLength">屈服应变</label>
-                        <input type="number" id="boltQuFuEpsilon" step="0.1" value="0.0032">
+                        <label for="boltLength" data-i18n="yieldStrain">屈服应变</label>
+                        <input type="number" id="boltQuFuEpsilon" step="0.001" value="0.0032">
                     </div>
                     <div class="form-group">
-                        <label for="boltHeadDiameter">峰值应变</label>
-                        <input type="number" id="boltFengZhiEpsilon" step="0.1" value="0.0632">
+                        <label for="boltHeadDiameter" data-i18n="ultimateStrain">极限应变</label>
+                        <input type="number" id="boltFengZhiEpsilon" step="0.001" value="0.0632">
                     </div>
                     <div class="form-group">
-                        <label for="boltHeadDiameter">断裂应变</label>
-                        <input type="number" id="boltDuanLieEpsilon" step="0.1" value="0.141">
+                        <label for="boltHeadDiameter" data-i18n="fractureStrain">断裂应变</label>
+                        <input type="number" id="boltDuanLieEpsilon" step="0.01" value="0.141">
                     </div>
                 </div>
                 <div class="input-row">
                     <div class="form-group">
-                        <label for="boltLength">屈服强度</label>
+                        <label for="boltLength" data-i18n="yieldStrength">屈服强度 (MPa)</label>
                         <input type="number" id="boltQuFuForce" step="1" value="650">
                     </div>
                     <div class="form-group">
-                        <label for="boltHeadDiameter">峰值强度</label>
+                        <label for="boltHeadDiameter" data-i18n="ultimateStrength">极限强度 (MPa)</label>
                         <input type="number" id="boltFengZhiForce" step="1" value="930">
                     </div>
                     <div class="form-group">
-                        <label for="boltHeadDiameter">断裂强度</label>
+                        <label for="boltHeadDiameter" data-i18n="fractureStrength">断裂强度 (MPa)</label>
                         <input type="number" id="boltDuanLieForce" step="1" value="750">
                     </div>
                 </div>
-
-
-
-
 
             </div>
 
@@ -195,17 +199,14 @@
                 </div>
             </div>
 
-            <button id="calculateBtn" class="btn">计算并生成曲线</button>
+            <button id="calculateBtn" class="btn" data-i18n="calculateBtn">计算并生成 F-Δ 曲线</button>
         </div>
 
-
-
-
         <div class="output-section">
-            <h2>计算结果</h2>
+            <h2 data-i18n="predictionResult">预测结果</h2>
             <div class="failure-mode">
                 <h3>
-                    失效模式 <div id="failureModeResult">等待计算...</div>
+                    <span data-i18n="failureMode">失效模式</span> <div id="failureModeResult" data-i18n="waiting">等待计算...</div>
                 </h3>
 
             </div>
@@ -213,8 +214,8 @@
             <div class="chart-container" id="chart"></div>
 
             <div class="results">
-                <h3>关键数据点</h3>
-                <div id="pointsResult">等待计算...</div>
+                <h3 data-i18n="keyPoints">关键点</h3>
+                <div id="pointsResult" data-i18n="waiting">等待计算...</div>
             </div>
         </div>
     </div>
