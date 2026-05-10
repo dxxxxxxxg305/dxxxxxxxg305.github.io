@@ -8,12 +8,259 @@
  * @constructor
  */
 function TShapeCalculator() {
+    const translations = {
+        en: {
+            langCode: 'en',
+            langButton: '中',
+            langAria: 'Switch to Chinese',
+            languageLabel: 'Language:',
+            appTitle: 'T-stub Full-Range Behaviour Calculator',
+            inputParameters: 'Input parameters',
+            flangeMaterial: 'Flange material',
+            elasticModulus: 'Elastic modulus E (MPa)',
+            yieldStrengthFy: 'Yield strength fy (MPa)',
+            strengtheningModulus: 'Strengthening modulus Eh (MPa)',
+            neckingModulus: 'Necking modulus Enk (MPa)',
+            strengtheningStrain: 'Strengthening strain εh',
+            peakStrain: 'Peak strain εm',
+            fractureStrainEu: 'Fracture strain εu',
+            geometricDimensions: 'Geometric dimensions',
+            effectiveDiameter: 'Effective diameter (mm)',
+            flangeThickness: 'Flange thickness tf (mm)',
+            widthLf: 'Width lf (mm)',
+            calculatedLength: 'Calculated length LB (mm)',
+            boltHeadDiameter: 'Bolt head diameter (mm)',
+            washerDiameter: 'Washer diameter (mm)',
+            boltMaterial: 'Bolt material',
+            yieldStrain: 'Yield strain',
+            ultimateStrain: 'Ultimate strain',
+            fractureStrain: 'Fracture strain',
+            yieldStrength: 'Yield strength (MPa)',
+            ultimateStrength: 'Ultimate strength (MPa)',
+            fractureStrength: 'Fracture strength (MPa)',
+            calculateBtn: 'Calculate and generate F-Δ curves',
+            predictionResult: 'Prediction result',
+            failureMode: 'Failure Mode',
+            waiting: 'Waiting for calculation...',
+            keyPoints: 'Key Points',
+            chartTitle: 'T-stub Full-range F-Δ curve',
+            xAxisName: 'Deformation Δ(mm)',
+            yAxisName: 'Load F(kN)',
+            loadN: 'Load F',
+            loadKn: 'Load F',
+            deformation: 'Deformation Δ',
+            pointNames: {
+                origin: 'Origin',
+                May: 'Flange yield point',
+                Mah: 'Flange strengthening point',
+                Mam: 'Flange peak point',
+                Mau: 'Flange fracture point',
+                By: 'Bolt yield point',
+                Bu: 'Bolt peak point',
+                Bf: 'Bolt fracture point'
+            }
+        },
+        zh: {
+            langCode: 'zh-CN',
+            langButton: 'EN',
+            langAria: '切换到英文',
+            languageLabel: '语言:',
+            appTitle: 'T-stub 全过程行为计算器',
+            inputParameters: '输入参数',
+            flangeMaterial: '翼缘材料',
+            elasticModulus: '弹性模量 E (MPa)',
+            yieldStrengthFy: '屈服强度 fy (MPa)',
+            strengtheningModulus: '强化模量 Eh (MPa)',
+            neckingModulus: '颈缩模量 Enk (MPa)',
+            strengtheningStrain: '强化应变 εh',
+            peakStrain: '峰值应变 εm',
+            fractureStrainEu: '断裂应变 εu',
+            geometricDimensions: '几何尺寸',
+            effectiveDiameter: '有效直径 (mm)',
+            flangeThickness: '翼缘厚度 tf (mm)',
+            widthLf: '宽度 lf (mm)',
+            calculatedLength: '计算长度 LB (mm)',
+            boltHeadDiameter: '螺栓头直径 (mm)',
+            washerDiameter: '垫圈直径 (mm)',
+            boltMaterial: '螺栓材料',
+            yieldStrain: '屈服应变',
+            ultimateStrain: '极限应变',
+            fractureStrain: '断裂应变',
+            yieldStrength: '屈服强度 (MPa)',
+            ultimateStrength: '极限强度 (MPa)',
+            fractureStrength: '断裂强度 (MPa)',
+            calculateBtn: '计算并生成 F-Δ 曲线',
+            predictionResult: '预测结果',
+            failureMode: '失效模式',
+            waiting: '等待计算...',
+            keyPoints: '关键点',
+            chartTitle: 'T-stub全过程 F-Δ 曲线',
+            xAxisName: '变形Δ(mm)',
+            yAxisName: '荷载F(kN)',
+            loadN: '荷载 F',
+            loadKn: '荷载 F',
+            deformation: '变形 Δ',
+            pointNames: {
+                origin: '原点',
+                May: '翼缘屈服点',
+                Mah: '翼缘强化点',
+                Mam: '翼缘峰值点',
+                Mau: '翼缘断裂点',
+                By: '螺栓屈服点',
+                Bu: '螺栓峰值点',
+                Bf: '螺栓断裂点'
+            }
+        }
+    };
+    let currentLang = 'en';
+    let latestPoints = null;
+    let latestFailureMode = '';
+    let chartInstance = null;
+
     const service = {
         clickToCalculate,
     };
 
     function clickToCalculate() {
+        setupLanguageToggle();
+        applyLanguage();
+        initEmptyChart();
         document.getElementById('calculateBtn').addEventListener('click', startCalculation);
+    }
+
+    function t(key) {
+        return translations[currentLang][key] || translations.en[key] || key;
+    }
+
+    function pointName(id) {
+        return translations[currentLang].pointNames[id] || translations.en.pointNames[id] || id;
+    }
+
+    function setupLanguageToggle() {
+        const buttons = document.querySelectorAll('[data-lang-control]');
+        buttons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                const selectedLang = button.getAttribute('data-lang-control');
+                if (!translations[selectedLang] || selectedLang === currentLang) return;
+                currentLang = selectedLang;
+                applyLanguage();
+                if (latestPoints) {
+                    displayResults(latestPoints, latestFailureMode);
+                    drawChart(latestPoints);
+                } else {
+                    initEmptyChart();
+                }
+            });
+        });
+    }
+
+    function applyLanguage() {
+        const dict = translations[currentLang];
+        document.documentElement.lang = dict.langCode;
+        document.title = dict.appTitle;
+        document.querySelectorAll('[data-i18n]').forEach(function (element) {
+            const key = element.getAttribute('data-i18n');
+            element.textContent = t(key);
+        });
+
+        document.querySelectorAll('[data-lang-control]').forEach(function (button) {
+            const isActive = button.getAttribute('data-lang-control') === currentLang;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-pressed', String(isActive));
+        });
+    }
+
+    function getChart() {
+        const chartDom = document.getElementById('chart');
+        if (!chartDom) return null;
+        chartInstance = chartInstance || echarts.init(chartDom);
+        return chartInstance;
+    }
+
+    function initEmptyChart() {
+        const myChart = getChart();
+        if (!myChart) return;
+        myChart.setOption({
+            title: {
+                text: t('chartTitle'),
+                left: 'center',
+                textStyle: {
+                    fontSize: 25,
+                    fontWeight: 'bold'
+                }
+            },
+            xAxis: createXAxisOption(),
+            yAxis: createYAxisOption(),
+            series: [{
+                type: 'line',
+                data: []
+            }],
+            grid: {
+                left: '14%',
+                right: '6%',
+                bottom: '18%',
+                top: '15%',
+                containLabel: true
+            }
+        });
+    }
+
+    function createAxisTextStyle() {
+        return {
+            color: '#000',
+            fontSize: 15,
+            fontWeight: 'bold'
+        };
+    }
+
+    function createAxisLabelStyle() {
+        return {
+            color: '#000',
+            fontSize: 15
+        };
+    }
+
+    function createXAxisOption() {
+        return {
+            type: 'value',
+            name: t('xAxisName'),
+            nameLocation: 'middle',
+            nameGap:26,
+            nameTextStyle: createAxisTextStyle(),
+            axisLabel: createAxisLabelStyle(),
+            axisLine: {
+                lineStyle: {
+                    color: '#000'
+                }
+            },
+            axisTick: {
+                lineStyle: {
+                    color: '#000'
+                }
+            }
+        };
+    }
+
+    function createYAxisOption() {
+        return {
+            type: 'value',
+            name: t('yAxisName'),
+            nameLocation: 'middle',
+            nameGap: 35,
+            nameRotate: 90,
+            nameTextStyle: createAxisTextStyle(),
+            axisLabel: createAxisLabelStyle(),
+            axisLine: {
+                lineStyle: {
+                    color: '#000'
+                }
+            },
+            axisTick: {
+                lineStyle: {
+                    color: '#000'
+                }
+            }
+        };
     }
 
     function startCalculation() {
@@ -1146,198 +1393,129 @@ function TShapeCalculator() {
     }
 
     function createOutput(allPoints, failureMode) {
+        latestPoints = useKnUnit(allPoints);
+        latestFailureMode = failureMode;
+        displayResults(latestPoints, latestFailureMode);
+        drawChart(latestPoints);
+    }
 
-        allPoints = useKnUnit();
+    function displayResults(points, failureMode) {
+        document.getElementById('failureModeResult').innerHTML = `<strong>${failureMode}</strong>`;
 
-        // 页面加载时初始化图表
-        window.addEventListener('DOMContentLoaded', function () {
-            const chartDom = document.getElementById('chart');
-            const myChart = echarts.init(chartDom);
-            myChart.setOption({
-                title: {
-                    text: 'T形件全过程曲线',
-                    left: 'center',
-                    textStyle: {
-                        fontSize: 18,
-                        fontWeight: 'bold'
-                    }
-                },
-                xAxis: {
-                    type: 'value',
-                    name: '变形 Δ (mm)',
-                    nameLocation: 'middle',
-                    nameGap: 30
-                },
-                yAxis: {
-                    type: 'value',
-                    name: '荷载 F (kN)',
-                    nameLocation: 'middle',
-                    nameGap: 40
-                },
-                series: [{
-                    type: 'line',
-                    data: []
-                }],
-                grid: {
-                    left: '10%',
-                    right: '5%',
-                    bottom: '15%',
-                    top: '15%',
-                    containLabel: true
-                }
-            });
-        });
-
-        // 显示结果
-        displayResults(allPoints, failureMode);
-
-        // 绘制图表
-        // drawChart(allPoints, failureMode);
-        drawChart(allPoints, failureMode);
-
-        // 显示计算结果
-        function displayResults(points, failureMode) {
-            // 显示失效模式
-            document.getElementById('failureModeResult').innerHTML = `<strong>${failureMode}</strong>`;
-
-            // 显示关键数据点
-            let pointsHTML = '';
-            points.forEach((point, index) => {
-                // 原点虽然画出来，但是不标记，下边也不展示关键信息
-                if (index > 0) {
-                    pointsHTML += `
+        let pointsHTML = '';
+        points.forEach((point, index) => {
+            if (index > 0) {
+                pointsHTML += `
                 <div class="result-item">
-                     <div class="r-i1"><strong>${index}, ${point.name}  ${point.id} </strong>:</div>
-                     <div class="r-i1">荷载F = ${point.originalY.toFixed(0)} N</div>
-                     <div class="r-i1">变形Δ = ${point.x.toFixed(2)} mm</div>
+                     <div class="r-i1"><strong>${index}, ${pointName(point.id)}  ${point.id} </strong>:</div>
+                     <div class="r-i1">${t('loadN')} = ${point.originalY.toFixed(0)} N</div>
+                     <div class="r-i1">${t('deformation')} = ${point.x.toFixed(2)} mm</div>
                 </div>
             `;
+            }
+        });
+        document.getElementById('pointsResult').innerHTML = pointsHTML || t('waiting');
+    }
+
+    function useKnUnit(points) {
+        return points.map(point => ({
+            ...point,
+            originalY: point.originalY || point.y,
+            y: point.originalY ? point.y : point.y / 1000
+        }));
+    }
+
+    function drawChart(points) {
+        const myChart = getChart();
+        if (!myChart) return;
+
+        const option = {
+            title: {
+                text: t('chartTitle'),
+                left: 'center',
+                textStyle: {
+                    fontSize: 25,
+                    fontWeight: 'bold'
                 }
-            });
-            document.getElementById('pointsResult').innerHTML = pointsHTML;
-        }
-
-        // 用千牛做单位
-        // 返回全部点
-        function useKnUnit() {
-            return allPoints.map(i => {
-                i.originalY = i.y;
-                i.y = i.y / 1000;
-                return i;
-            });
-        }
-
-
-        function drawChart(points) {
-            const chartDom = document.getElementById('chart');
-            const myChart = echarts.init(chartDom);
-
-            const option = {
-                title: {
-                    text: 'T形件全过程曲线',
-                    left: 'center'
-                },
-                tooltip: {
-                    trigger: 'item',
-                    formatter: function (params) {
-                        if (params.dataIndex === 0) {
-                            return ''; // 原点不展示tooltip
-                        }
-                        const point = points[params.dataIndex];
-                        return `
-                    ${point.name} ${point.id}<br/>
-                    荷载F: ${point.y.toFixed(2)} kN <br> 
-                    变形Δ: ${point.x.toFixed(4)} mm
+            },
+            tooltip: {
+                trigger: 'item',
+                formatter: function (params) {
+                    if (params.dataIndex === 0) {
+                        return '';
+                    }
+                    const point = points[params.dataIndex];
+                    return `
+                    ${pointName(point.id)} ${point.id}<br/>
+                    ${t('loadKn')}: ${point.y.toFixed(2)} kN <br>
+                    ${t('deformation')}: ${point.x.toFixed(4)} mm
                 `;
-                    }
-                },
-                xAxis: {
-                    type: 'value',
-                    name: '变形 Δ (mm)'
-                },
-                yAxis: {
-                    type: 'value',
-                    name: '荷载 F (kN)'
-                },
-                series: [{
-                    type: 'line',
-                    data: points.map(point => [point.x, point.y]),
-                    // showSymbol: 'circle',
-                    // showSymbol: false,
-                    // symbolSize: 8,
-                    lineStyle: {
-                        color: '#3498db',
-                        width: 2
-                    },
-
-                    markPoint: {
-
-                        data: points.map((point, index) => {
-                            let mPoint = {
-                                name: `${index + 1}`,
-                                //coord: [point.x , point.y],
-                                coord: [point.x, point.y + 1.5],
-                                symbol: 'circle',
-                                symbolSize: 5,
-                                itemStyle: {
-                                    color: '#fff',
-                                    borderColor: '#e74c3c',
-                                    borderWidth: 0
-                                },
-                                label: {
-                                    show: true,
-                                    // formatter: '{b}',
-                                    // 原点虽然画出来，但是不标记，下边也不展示关键信息
-                                    formatter: function (params) {
-                                        // console.log('formatter params:', params);
-
-                                        const pointIndex = params.dataIndex;
-                                        // const point = filteredPoints[pointIndex];
-
-                                        // 1. 跳过特定点的数字标记（如果需要）
-                                        if (pointIndex === 0) { // 原点
-                                            return ''; // 返回空字符串则不显示数字
-                                        } else {
-                                            return pointIndex;
-                                        }
-
-                                    },
-                                    position: 'inside',
-                                    color: '#000',
-                                    fontWeight: 'normal'
-                                }
-                            }
-                            if (index === 0) {
-                                // 原点不展示
-                                Object.assign(mPoint, {
-                                    symbol: '',
-                                    symbolSize: 0,
-                                    label: {
-                                        show: false
-                                    }
-                                });
-                            }
-
-                            return mPoint;
-                        })
-
-
-                    }
-
-                }],
-                grid: {
-                    left: '10%',
-                    right: '10%',
-                    bottom: '15%',
-                    top: '15%'
                 }
-            };
+            },
+            xAxis: createXAxisOption(),
+            yAxis: createYAxisOption(),
+            series: [{
+                type: 'line',
+                data: points.map(point => [point.x, point.y]),
+                lineStyle: {
+                    color: '#3498db',
+                    width: 3
+                },
+                markPoint: {
+                    data: points.map((point, index) => {
+                        let mPoint = {
+                            name: `${index + 1}`,
+                            coord: [point.x, point.y + 1.5],
+                            symbol: 'circle',
+                            symbolSize: 5,
+                            itemStyle: {
+                                color: '#fff',
+                                borderColor: '#e74c3c',
+                                borderWidth: 0
+                            },
+                            label: {
+                                show: true,
+                                formatter: function (params) {
+                                    const pointIndex = params.dataIndex;
+                                    return pointIndex === 0 ? '' : pointIndex;
+                                },
+                                position: 'inside',
+                                color: '#000',
+                                fontWeight: 'normal'
+                            }
+                        }
+                        if (index === 0) {
+                            Object.assign(mPoint, {
+                                symbol: '',
+                                symbolSize: 0,
+                                label: {
+                                    show: false
+                                }
+                            });
+                        }
 
-            myChart.setOption(option);
+                        return mPoint;
+                    })
+                }
+            }],
+            grid: {
+                left: '14%',
+                right: '6%',
+                bottom: '18%',
+                top: '15%',
+                containLabel: true
+            }
+        };
 
-            window.addEventListener('resize', function () {
-                myChart.resize();
-            });
+        myChart.setOption(option, true);
+
+        window.removeEventListener('resize', resizeChart);
+        window.addEventListener('resize', resizeChart);
+    }
+
+    function resizeChart() {
+        if (chartInstance) {
+            chartInstance.resize();
         }
     }
 
